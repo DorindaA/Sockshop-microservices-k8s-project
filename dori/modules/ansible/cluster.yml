@@ -1,0 +1,36 @@
+- hosts: Master
+  become: yes
+  tasks:
+    - name: initialize the cluster
+      shell: sudo kubeadm init   --pod-network-cidr=192.168.0.0/16  --cri-socket unix:///var/run/crio/crio.sock
+      args:
+        chdir: /home/ubuntu
+        creates: cluster_initialized.txt
+
+    - name: Copying required files/exposiong the confg file
+      shell: |
+        mkdir -p $HOME/.kube
+        sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
+        sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+    - name: Install Pod network
+      become: yes
+      shell: kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
+      args:
+        chdir: /home/ubuntu
+
+    - name: Get the token for joining the worker nodes
+      become: yes
+      shell: kubeadm token create  --print-join-command
+      register: kubernetes_join_command
+
+    - debug:
+        msg: "{{ kubernetes_join_command.stdout }}"
+
+    - name: Copy join command to local file.
+      become: yes
+      local_action: copy content="{{ kubernetes_join_command.stdout_lines[0] }}" dest="/tmp/kubernetes_join_command" mode=0777
+
+    - name: Insert socker url at the back of token
+      shell: sudo echo "--cri-socket unix:///var/run/crio/crio.sock" >> /tmp/kubernetes_join_command
+      delegate_to: localhost

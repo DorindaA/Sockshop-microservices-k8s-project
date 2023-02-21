@@ -1,0 +1,14 @@
+ - hosts: Master
+   become: true
+   tasks:
+    - name: Create monitoring namespace
+      become_user: ubuntu
+      shell: kubectl create -f 00-monitoring-ns.yaml
+      args:
+        chdir: microservices-demo/deploy/kubernetes/manifests-monitoring
+    - name: Apply Prometheus Manifests
+      become_user: ubuntu
+      shell: kubectl apply $(ls *-prometheus-*.yaml | awk ' { print " -f " $1 } ')
+      args:
+        chdir: microservices-demo/deploy/kubernetes/manifests-monitoring
+    

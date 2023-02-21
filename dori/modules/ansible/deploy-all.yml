@@ -1,0 +1,10 @@
+ - name: deploy playbook to install kubernetes in all nodes
+   import_playbook: ./installation.yml
+ - name: deploy playbook to create cluster in master node
+   import_playbook: ./cluster.yml
+ - name: deploy playbook to join master and worker nodes
+   import_playbook: ./join.yml
+ - name: deploy playbook to deploy the Socks-Shop microservice App in Master nodes
+   import_playbook: ./deployment.yml
+ - name: deploy playbook to monitor our Application using Prometheus
+   import_playbook: ./monitoring.yml
